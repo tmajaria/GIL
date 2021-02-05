@@ -40,6 +40,10 @@ if __name__ == '__main__':
 	    test_images.append(train_images.pop(random_index))
 	    test_labels.append(train_labels.pop(random_index))
 
+    # Get total number of images in each set
+    test_image_sizes, test_image_count = getImageSetSize(test_images)
+	train_image_sizes, train_image_count = getImageSetSize(train_images)
+
 	# Create a mirrored strategy
 	strategy = tf.distribute.MirroredStrategy()
 	print(f'Number of devices: {strategy.num_replicas_in_sync}')
@@ -47,8 +51,8 @@ if __name__ == '__main__':
 	# Initialize settings for training
 	batch_size = 8
 	epochs =  15
-	train_steps = len(train_images) // batch_size
-	val_steps = len(test_images) // batch_size
+	train_steps = train_image_count // batch_size
+	val_steps = test_image_count // batch_size
 
 	# Create the data generators
 	trainGen = batchGenerator(train_images, train_labels, batch_size)
