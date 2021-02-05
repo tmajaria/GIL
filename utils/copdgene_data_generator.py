@@ -80,3 +80,18 @@ def pullRandomNrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
 
     print(f'Returned {len(file_list)} files')
     return file_list, file_labels
+
+
+def getImageSetSize(file_list):
+	file_size_list = []
+	reader = sitk.ImageFileReader()
+
+	for file in file_list:
+		reader.SetFileName(file)
+		reader.LoadPrivateTagsOn()
+		reader.ReadImageInformation()
+		file_size_list.append(reader.GetSize()[2])
+
+	num_images = sum(file_size_list)
+
+	return file_size_list, num_images
