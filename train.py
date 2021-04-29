@@ -2,6 +2,8 @@
 import argparse
 import tensorflow as tf
 import numpy as np
+import pandas as pd
+from sklearn.model_selection import test_train_split
 
 from vgg16 import VGG_16
 from copdgene_data_generator import *
@@ -13,39 +15,33 @@ print('Tensorflow version: ' + tf.__version__)
 if __name__ == '__main__':
 	# Parse command line arguments
 	parser = argparse.ArgumentParser()
-	parser.add_argument('--data_directory', metavar='FOLDER', required=True, help="Directory containing images.")
-	parser.add_argument('--insp_exp', help='Specify INSP(iration) or EXP(iration). Default is both', default='')
-	parser.add_argument('--std_sharp', help='Specify STD or SHARP images. Default is both', default = '')
-	parser.add_argument('--num_files', help='Number of files to include in training. Default is 100', type=int, default=100)
-	parser.add_argument('--test_ratio', help='Percentage for testing data. Default is 30%', type=float, default=0.3)
+
+	parser.add_argument('--data_csv', required=True, metavar='CSV FILE', help="CSV file pointing to images" )
+	parser.add_argument('--image_column', required=True, help='Column name for images')
+	parser.add_argument('--label_column', required=True, help='Column name for labels')
+	parser.add_argument('--test_ratio', help='Percentage for testing data. Default is 0.3 (30%)', type=float, default=0.3)
 	parser.add_argument('--epochs', help='Number of epochs. Default is 15', type=int, default=15)
 	parser.add_argument('--batch_size', help='Training batch size. Default is 8', type=int, default=8)
 	parser.add_argument('--output', help="Specify file name for output. Default is 'model'", default='model')
 	args = parser.parse_args()
 
-	insp_exp = args.insp_exp
-	std_sharp = args.std_sharp
-	num_files = args.num_files
-	epochs = args.epochs
+	epochs = args.epochs      
 	batch_size = args.batch_size
 	output = args.output
 	test_ratio = args.test_ratio
 
-	# Point to project files folder
-	parent_dir = args.data_directory
+	# Point to images
+	image_list_file = args.data_csv
+	image_column = args.image_column
+	label_column = args.label_column
 
 	# Pull the list of files
-	train_images, train_labels  = pullRandomNrrds(parent_dir, num_files=num_files)
-	
-	# Split test set
-	test_images = []
-	test_labels = []
-	test_count = int(test_ratio * len(train_images)) # Using 30% of subjects for test set
+	train_df = pd.read_csv(image_list_file)
+	images =  train_df[image_column].to_list()
+	labels  = train_df[label_column].to_list()
 
-	while len(test_images) < test_count:
-	    random_index = random.randrange(len(train_images))
-	    test_images.append(train_images.pop(random_index))
-	    test_labels.append(train_labels.pop(random_index))
+	# Split test set
+	train_images, test_images, train_labels, test_labels = train_test_split(images, labels, test_size=test_ratio, random_state=42)
 	
 	# FOR DEBUG REMOVE IT
 	print(f"Train Shape: {len(train_images)}")
