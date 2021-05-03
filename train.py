@@ -52,7 +52,7 @@ if __name__ == '__main__':
 	print(f"Test Shape: {len(test_images)}")
 	print(f"Test Label Len: {len(test_labels)}")
 
-    # Get total number of images in each set
+    	# Get total number of images in each set
 	train_image_sizes, train_image_count = getImageSetSize(train_images)
 	test_image_sizes, test_image_count = getImageSetSize(test_images)
 
