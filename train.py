@@ -3,7 +3,7 @@ import argparse
 import tensorflow as tf
 import numpy as np
 import pandas as pd
-from sklearn.model_selection import test_train_split
+from sklearn.model_selection import train_test_split
 
 from vgg16 import VGG_16
 from copdgene_data_generator import *
