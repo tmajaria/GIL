@@ -129,7 +129,7 @@ def pullRandomNrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
 def getImageSetSize(file_list, index_first = True):
 	file_size_list = []
 	reader = sitk.ImageFileReader()
-  index = 0 if index_first else -1
+  	index = 0 if index_first else -1
 
 	for file in file_list:
 		reader.SetFileName(file)
