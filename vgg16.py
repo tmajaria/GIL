@@ -1,10 +1,9 @@
-# VGG-16 Keras implementation
-import tensorflow as tf
+""" VGG-16 Keras implementation """
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Activation, Dropout, Flatten, Dense, ZeroPadding2D, BatchNormalization
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Activation, Dropout, Flatten, Dense
 
 
-def VGG_16(input_shape=(224,224,3), weightsPath=None, classes=1000, dropout=0.5, classifier_activation='softmax'): 
+def VGG_16(input_shape=(224,224,3), weightsPath=None, classes=1000, dropout=0.5, classifier_activation='softmax'):
     model = Sequential()
 
     model.add(Conv2D(input_shape=input_shape, filters=64, kernel_size=(3, 3), padding='same', activation='relu', name='conv1_1'))

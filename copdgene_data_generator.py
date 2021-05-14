@@ -1,4 +1,4 @@
-#COPDGene training data generator
+""" COPDGene training data generator """
 import os
 import random
 import glob
@@ -6,11 +6,11 @@ import numpy as np
 import SimpleITK as sitk
 import tensorflow as tf
 
-def batchGenerator(file_list, label_list, batch_size):
+def batch_generator(file_list, label_list, batch_size):
     # Load first NRRD
     file_index = 0
     slice_num = 0
-    img_array, img_label, file_index = processNextNrrd(file_list, label_list, file_index)
+    img_array, img_label, file_index = process_next_nrrd(file_list, label_list, file_index)
 
     # Loop indefinitely
     while True:
@@ -25,7 +25,7 @@ def batchGenerator(file_list, label_list, batch_size):
                 labels.append(img_label)
                 slice_num += 1
             else:
-                img_array, img_label, file_index = processNextNrrd(file_list, label_list, file_index)
+                img_array, img_label, file_index = process_next_nrrd(file_list, label_list, file_index)
                 slice_num = 0
 
         # Set correct formats
@@ -38,15 +38,15 @@ def batchGenerator(file_list, label_list, batch_size):
         # Yield to the calling function
         yield (batch_array, labels)
 
-def batchGeneratorPredict(file_list, label_list, batch_size, small_set=32):
+def batch_generator_predict(file_list, label_list, batch_size, small_set=32):
     # Load first NRRD
     file_index = 0
     slice_num = 0
     slice_all = 0
     counter = 0
-    
-    img_array, img_label, file_index = processNextNrrd(file_list, label_list, file_index)
-    
+
+    img_array, img_label, file_index = process_next_nrrd(file_list, label_list, file_index)
+
     img_array = img_array[:,:,:small_set]
 
     # Loop indefinitely
@@ -63,14 +63,14 @@ def batchGeneratorPredict(file_list, label_list, batch_size, small_set=32):
                 slice_num += 1
             else:
                 if len(file_list) > 1:
-                  img_array, img_label, file_index = processNextNrrd(file_list, label_list, file_index)
+                    img_array, img_label, file_index = process_next_nrrd(file_list, label_list, file_index)
                 slice_all += slice_num
                 counter += 1
                 slice_num = 0
 
         # Set correct formats
         batch_array = np.array(batch_array)
-        
+
         print(f'batch_array shape BEFORE: {batch_array.shape} Counter: {counter}')
         batch_array = np.reshape(batch_array, (batch_array.shape[0], batch_array.shape[1], batch_array.shape[2], 1))
 
@@ -80,7 +80,7 @@ def batchGeneratorPredict(file_list, label_list, batch_size, small_set=32):
         # Yield to the calling function
         yield (batch_array, labels)
 
-def processNextNrrd(file_list, label_list, file_index):
+def process_next_nrrd(file_list, label_list, file_index):
     # Load nrrd file
     img = sitk.ReadImage(file_list[file_index])
     # Convert to img_array
@@ -99,14 +99,14 @@ def processNextNrrd(file_list, label_list, file_index):
     return img_array, img_label, file_index
 
 
-def pullRandomNrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
+def pull_random_nrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
     file_list = []
     file_labels = []
 
     subject_list = glob.glob(os.path.join(parent_dir, '*/'))
     ##### TODO: Replace the subject labels with some thing useful from PIC-SURE
     ##### For now just assign them a random 0 or 1 for a binary classifier
-    subject_label_list = [random.randint(0,1) for subject in subject_list]
+    subject_label_list = [random.randint(0, 1) for subject in subject_list]
 
     while (len(file_list) < num_files) and (len(subject_list) > 0):
         file_index = random.randrange(len(subject_list))
@@ -116,27 +116,27 @@ def pullRandomNrrds(parent_dir, insp_exp='', std_sharp='', num_files=100):
         labels = [subject_label for file in file_name]
         if not file_name:
             continue
-        else:
-            for file in file_name:
-                file_list.append(file)
-            for label in labels:
-                file_labels.append(label)
+
+        for file in file_name:
+            file_list.append(file)
+        for label in labels:
+            file_labels.append(label)
 
     print(f'Returned {len(file_list)} files')
     return file_list, file_labels
 
 
-def getImageSetSize(file_list, index_first = True):
-	file_size_list = []
-	reader = sitk.ImageFileReader()
-  	index = 0 if index_first else -1
+def get_image_set_size(file_list, index_first=True):
+    file_size_list = []
+    reader = sitk.ImageFileReader()
+    index = 0 if index_first else -1
 
-	for file in file_list:
-		reader.SetFileName(file)
-		reader.LoadPrivateTagsOn()
-		reader.ReadImageInformation()
-		file_size_list.append(reader.GetSize()[index]) # (554, 512, 512)
+    for file in file_list:
+        reader.SetFileName(file)
+        reader.LoadPrivateTagsOn()
+        reader.ReadImageInformation()
+        file_size_list.append(reader.GetSize()[index]) # (554, 512, 512)
 
-	num_images = sum(file_size_list)
+    num_images = sum(file_size_list)
 
-	return file_size_list, num_images
+    return file_size_list, num_images

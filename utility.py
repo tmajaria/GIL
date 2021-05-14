@@ -1,3 +1,4 @@
+""" Utility scripts for deep learning pipeline """
 from sklearn.metrics import accuracy_score, roc_curve, auc, roc_auc_score, \
     precision_recall_fscore_support, matthews_corrcoef
 import sys
@@ -25,7 +26,7 @@ def print_history(history, validation):
                 'Epoch {}/{}: accuracy : {:.3f}, loss : {:.3f} '.format(epoch + 1, epochs, history.history['accuracy'][epoch], history.history['loss'][epoch]))
 
 # TRAINING OR TESTING
-def plot_auc(y_labels, pred, parameters_dict = {}, title=''):
+def plot_auc(y_labels, pred, parameters_dict={}, title=''):
     # Scores
     false_positive_rate, recall, thresholds = roc_curve(y_labels, pred)
     roc_auc = auc(false_positive_rate, recall)
@@ -46,7 +47,7 @@ def plot_auc(y_labels, pred, parameters_dict = {}, title=''):
     plt.show()
 
 # TRAINING OR TESTING
-def calculate_metrics(y_labels, prob, pred, average="binary", num_classes = 1):
+def calculate_metrics(y_labels, prob, pred, average="binary", num_classes=1):
     if num_classes == 2:
         roc_auc = roc_auc_score(y_labels, prob[:, 1], multi_class='ovr')
     else:
@@ -74,10 +75,10 @@ def calculate_metrics(y_labels, prob, pred, average="binary", num_classes = 1):
            np.round(mcc, 3)
 
 # TRAINING
-def plot_loss(history, parameters_dict = {}):
+def plot_loss(history, parameters_dict={}):
     loss_train = list(np.log10(history.history['loss']))
     loss_val = list(np.log10(history.history['val_loss']))
-    epochs_initial = len(loss_val_initial)
+    epochs_initial = len(loss_val)
 
     epochs = range(1, epochs_initial + 1)
     min_loss = min(loss_train + loss_val)
@@ -97,7 +98,7 @@ def plot_loss(history, parameters_dict = {}):
     plt.show()
 
 # TRAINING OR TESTING
-def plot_predictions(validation_labels, pred, parameters_dict = {}, title=''):
+def plot_predictions(validation_labels, pred, parameters_dict={}, title=''):
     num_samples_to_show = np.min([len(pred), 100])
     plt.figure(figsize=(30, 10))
     plt.plot(range(num_samples_to_show), pred[:num_samples_to_show], 'ys', label='Predicted_value')
@@ -113,7 +114,7 @@ def plot_predictions(validation_labels, pred, parameters_dict = {}, title=''):
     plt.show()
 
 # TRAINING OR TESTING
-def plot_confusion_matrix(cm, class_names, parameters_dict = {}, title=''):
+def plot_confusion_matrix(cm, class_names, parameters_dict={}, title=''):
     """
     Returns a matplotlib figure containing the plotted confusion matrix.
 
@@ -122,7 +123,7 @@ def plot_confusion_matrix(cm, class_names, parameters_dict = {}, title=''):
     class_names (array, shape = [n]): String names of the integer classes
     """
     figure = plt.figure(figsize=(8, 8))
-    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.imshow(cm, interpolation='nearest', cmap=plt.get_cmap('Blues'))
     plt.title(title.replace('_', ' '))
     plt.colorbar()
     tick_marks = np.arange(len(class_names))
