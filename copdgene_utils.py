@@ -1,9 +1,12 @@
+""" COPDGene specific utilities """
 import os
 import glob
 import random
+import multiprocessing
 import numpy as np
 import SimpleITK as sitk
-import multiprocessing
+import matplotlib.pyplot as plt
+from skimage import filters
 
 
 def pullRandomNrrds(parent_dir, insp_exp, std_sharp, num_files):
@@ -15,36 +18,41 @@ def pullRandomNrrds(parent_dir, insp_exp, std_sharp, num_files):
         print(f'Number requested exceeds number of subjects. Setting to maximum: {len(subject_list)} files')
         num_files = len(subject_list)
 
-    while (len(file_count) < num_files) && (len(subject_list) > 0):
+    while (len(file_count) < num_files) and (len(subject_list) > 0):
         subject_index = random.randrange(len(subject_list))
         subject = subject_list.pop(subject_index)
         file_name = glob.glob(os.path.join(subject, '*/*' + insp_exp + std_sharp + '.nrrd'))
         if not file_name:
             continue
-        else:
-            file_list.append(file_name)
+
+        file_list.append(file_name)
 
     print(f'Returned {len(file_list)} files')
     return file_list
 
 
-def copdgeneProcess(file_path, save_individual_images=False, **kwargs):
-    file_name = file_path.split('/')[-1].replace('.nrrd','')
+def copdgeneProcess(file_path, model, save_individual_images=False, **kwargs):
+    """
+    This was paused in progress, so it is broken as of right now. The intention is to
+    output image stacks of the predictions to stay within the file limits of SBG. Not
+    sure if this will be necessary, but other things took precedence so this will wait.
+    """
+    file_name = file_path.split('/')[-1].replace('.nrrd', '')
     image_stack = sitk.ReadImage(file_path)
     image_array = sitk.GetArrayFromImage(image_stack)
-    copd_array = np.reshape(copd_array, (copd_array.shape[0], copd_array.shape[1], copd_array.shape[2], 1))
+    copd_array = np.reshape(image_array, (image_array.shape[0], image_array.shape[1], image_array.shape[2], 1))
 
     num_images = copd_array.shape[0]
     output_height = copd_array.shape[1]
     output_width = copd_array.shape[2]
     output_channels = 3
     copd_norm = np.ndarray(shape=(num_images, output_height, output_width, output_channels), dtype='float32')
-    
+
     # Read the NRRD file and convert to NumPy array
     for ind in range(num_images):
         img = filters.median(copd_array[ind])
         img = (img - np.amin(img))/(np.amax(img) - np.amin(img))
-        
+
         for channel in range(output_channels):
             copd_norm[ind,:,:,channel] = img[...,0]
 
@@ -52,7 +60,7 @@ def copdgeneProcess(file_path, save_individual_images=False, **kwargs):
 
     copd_predict_stack = sitk.GetImageFromArray(copd_predict_results)
 
-    savePredictions()
+    savePredictions(copd_predict_stack, file_name)
 
 
     # Just plotting stuff. Don't leave this in the batch, we need to output nrrd stacks
@@ -64,7 +72,7 @@ def copdgeneProcess(file_path, save_individual_images=False, **kwargs):
         plt.yticks([])
         plt.grid(False)
         plt.imshow(copd_norm[ind], cmap='gray')
-        plt.imshow(copd_predict_results[ind], cmap=plt.cm.jet, alpha=0.4)
+        plt.imshow(copd_predict_results[ind], cmap=plt.get_cmap('jet'), alpha=0.4)
     plt.show()
 
 
@@ -73,7 +81,7 @@ def savePredictions(predict_img, output_path, filetype='png', save_individual_im
     if save_individual_images:
         list(map(lambda i: writeSlices(writer, predict_img, output_path, filetype, i), range(predict_img.GetDepth())))
     else:
-        writer.SetFileName(os.path.join(output_path, 'predict.nrrd'))
+        writer.SetFileName(os.path.join(output_path, '_predict.nrrd'))
         writer.Execute(predict_img)
 
 
@@ -96,9 +104,9 @@ def niftiToFlowArray(file_list, image_height, image_width):
     for file_zip in file_list:
         nifti_num = int(file_zip[0].replace('.nii','')[-1])
         image_batch.append(parallelSlices(file_zip, nifti_num, image_height, image_width))
-    
+
     image_array, mask_array = createFlowArray(image_batch, image_height, image_width)
-    
+
     return image_array, mask_array
 
 
@@ -115,10 +123,10 @@ def findSlicesWithMasks(ind, nifti_num, img, mask, image_batch, image_height, im
         mask_slice = np.reshape(mask_slice, (1, image_height, image_width, 1))
         mask_slice = mask_slice.astype(dtype='float32')
         image_batch[ind] = (nifti_num, ind, img_slice, mask_slice)
-        
+
     return image_batch
-        
-    
+
+
 def createFlowArray(image_batch, image_height, image_width, num_channels=1):
     """
     Batch indices:
@@ -136,13 +144,13 @@ def createFlowArray(image_batch, image_height, image_width, num_channels=1):
         for entry in nifti.values():
             image_array = np.append(image_array, entry[2], axis=0)
             mask_array = np.append(mask_array, entry[3], axis=0)
-            
+   
     image_array = np.delete(image_array, 0, 0)
     mask_array = np.delete(mask_array, 0, 0)
-                
+        
     return image_array, mask_array
-    
-    
+
+
 
 def parallelSlices(file_zip, nifti_num, image_height, image_width):
     """
@@ -153,7 +161,7 @@ def parallelSlices(file_zip, nifti_num, image_height, image_width):
     manager = multiprocessing.Manager()
     image_batch = manager.dict()
     jobs = []
-    
+
     image = sitk.ReadImage(file_zip[0])
     mask = sitk.ReadImage(file_zip[1])
     for i in range(image.GetSize()[2]):
@@ -163,10 +171,5 @@ def parallelSlices(file_zip, nifti_num, image_height, image_width):
 
     for proc in jobs:
         proc.join()
-        
+
     return image_batch
-
-
-
-
-
