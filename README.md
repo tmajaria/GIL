@@ -15,3 +15,6 @@ This repo houses the initial scripts for building a deep learning app on BioData
 | --epochs | Number of training epochs | int | 15 (Default) |   |
 | --batch_size | Training batch size | int | 8 (Default) |   |
 | --output | Specify file name for output | string | 'model' (Default) |   |
+
+## Debug
+`get_sizes.py --data_csv /path/to/file.csv --image_column image_path_column_name` will create a CSV containing the image name, SimpleITK image shape, and Numpy array shape. It will also print this information to the console.
