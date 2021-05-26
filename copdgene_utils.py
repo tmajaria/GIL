@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from skimage import filters
 
 
-def pullRandomNrrds(parent_dir, insp_exp, std_sharp, num_files):
+def pull_random_nrrds(parent_dir, insp_exp, std_sharp, num_files):
     file_count = 0
     file_list = list()
     subject_list = glob.glob(os.path.join(parent_dir, '*/'))
@@ -31,7 +31,7 @@ def pullRandomNrrds(parent_dir, insp_exp, std_sharp, num_files):
     return file_list
 
 
-def copdgeneProcess(file_path, model, save_individual_images=False, **kwargs):
+def copdgene_process(file_path, model, save_individual_images=False, **kwargs):
     """
     This was paused in progress, so it is broken as of right now. The intention is to
     output image stacks of the predictions to stay within the file limits of SBG. Not
@@ -60,7 +60,7 @@ def copdgeneProcess(file_path, model, save_individual_images=False, **kwargs):
 
     copd_predict_stack = sitk.GetImageFromArray(copd_predict_results)
 
-    savePredictions(copd_predict_stack, file_name)
+    save_predictions(copd_predict_stack, file_name)
 
 
     # Just plotting stuff. Don't leave this in the batch, we need to output nrrd stacks
@@ -76,16 +76,16 @@ def copdgeneProcess(file_path, model, save_individual_images=False, **kwargs):
     plt.show()
 
 
-def savePredictions(predict_img, output_path, filetype='png', save_individual_images=False):
+def save_predictions(predict_img, output_path, filetype='png', save_individual_images=False):
     writer = sitk.ImageFileWriter()
     if save_individual_images:
-        list(map(lambda i: writeSlices(writer, predict_img, output_path, filetype, i), range(predict_img.GetDepth())))
+        list(map(lambda i: write_slices(writer, predict_img, output_path, filetype, i), range(predict_img.GetDepth())))
     else:
         writer.SetFileName(os.path.join(output_path, '_predict.nrrd'))
         writer.Execute(predict_img)
 
 
-def writeSlices(writer, new_img, output_path, filetype, i):
+def write_slices(writer, new_img, output_path, filetype, i):
     image_slice = new_img[:, :, i]
 
     # Write to the output directory and add the extension to force
@@ -95,7 +95,7 @@ def writeSlices(writer, new_img, output_path, filetype, i):
 
 
 
-def niftiToFlowArray(file_list, image_height, image_width):
+def nifti_to_flow_array(file_list, image_height, image_width):
     """
     Process a list of Nifti files and return two Rank 4 Numpy arrays
     for using the Keras ImageDataGenerator.flow() method
@@ -103,14 +103,14 @@ def niftiToFlowArray(file_list, image_height, image_width):
     image_batch = []
     for file_zip in file_list:
         nifti_num = int(file_zip[0].replace('.nii','')[-1])
-        image_batch.append(parallelSlices(file_zip, nifti_num, image_height, image_width))
+        image_batch.append(parallel_slices(file_zip, nifti_num, image_height, image_width))
 
-    image_array, mask_array = createFlowArray(image_batch, image_height, image_width)
+    image_array, mask_array = create_flow_array(image_batch, image_height, image_width)
 
     return image_array, mask_array
 
 
-def findSlicesWithMasks(ind, nifti_num, img, mask, image_batch, image_height, image_width):
+def find_slices_with_masks(ind, nifti_num, img, mask, image_batch, image_height, image_width):
     # This returns images which have corresponding masks
     mask_slice = mask[:,:,ind]
     if max(mask_slice) > 0:
@@ -127,7 +127,7 @@ def findSlicesWithMasks(ind, nifti_num, img, mask, image_batch, image_height, im
     return image_batch
 
 
-def createFlowArray(image_batch, image_height, image_width, num_channels=1):
+def create_flow_array(image_batch, image_height, image_width, num_channels=1):
     """
     Batch indices:
     0: Nifti file number
@@ -152,7 +152,7 @@ def createFlowArray(image_batch, image_height, image_width, num_channels=1):
 
 
 
-def parallelSlices(file_zip, nifti_num, image_height, image_width):
+def parallel_slices(file_zip, nifti_num, image_height, image_width):
     """
     Iterating through the slices of each Nifti file one at a time is very slow.
     This processes the slices in parallel and returns a list of dictionaries,
@@ -165,7 +165,7 @@ def parallelSlices(file_zip, nifti_num, image_height, image_width):
     image = sitk.ReadImage(file_zip[0])
     mask = sitk.ReadImage(file_zip[1])
     for i in range(image.GetSize()[2]):
-        p = multiprocessing.Process(target=findSlicesWithMasks, args=(i, nifti_num, image, mask, image_batch, image_height, image_width))
+        p = multiprocessing.Process(target=find_slices_with_masks, args=(i, nifti_num, image, mask, image_batch, image_height, image_width))
         jobs.append(p)
         p.start()
 
