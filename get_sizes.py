@@ -1,5 +1,6 @@
 """ Return image sizes """
 import argparse
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 import SimpleITK as sitk
@@ -9,15 +10,17 @@ def print_images_with_sizes(file_list):
     file_size_df = pd.DataFrame(columns=['image', 'image_size', 'array_size'])
     reader = sitk.ImageFileReader()
 
-    for i,file in enumerate(file_list):
-        reader.SetFileName(file)
-        reader.LoadPrivateTagsOn()
-        reader.ReadImageInformation()
-        file_size_df.loc[i,'image'] = file
-        file_size_df.loc[i,'image_size'] = reader.GetSize()
-        image = sitk.ReadImage(file)
-        image_array = sitk.GetArrayFromImage(image)
-        file_size_df.loc[i,'array_size'] = image_array.shape
+    with tqdm(total=len(file_list)) as pbar:
+        for i,file in enumerate(file_list):
+            reader.SetFileName(file)
+            reader.LoadPrivateTagsOn()
+            reader.ReadImageInformation()
+            file_size_df.loc[i,'image'] = file
+            file_size_df.loc[i,'image_size'] = reader.GetSize()
+            image = sitk.ReadImage(file)
+            image_array = sitk.GetArrayFromImage(image)
+            file_size_df.loc[i,'array_size'] = image_array.shape
+            pbar.update(1)
 
     return file_size_df
 
