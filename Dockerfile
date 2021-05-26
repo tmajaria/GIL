@@ -25,5 +25,6 @@ RUN python3 -m pip install --upgrade pip && python3 -m pip install matplotlib se
 RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK
 
 WORKDIR /opt
+RUN git clone https://github.com/helxplatform/GIL.git
 
 COPY Dockerfile /opt
