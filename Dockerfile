@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.2-devel-ubuntu18.04
+FROM nvidia/cuda:11.0.3-devel-ubuntu18.04
 
 ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -y \
@@ -22,9 +22,9 @@ RUN export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/cuda/lib64
 #RUN apt-get update && apt-get install -y nvidia-smi
 RUN python3 -m pip install --upgrade pip && python3 -m pip install pandas numpy sklearn 
 RUN python3 -m pip install --upgrade pip && python3 -m pip install matplotlib seaborn 
-RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK
+RUN python3 -m pip install --upgrade pip && python3 -m pip install SimpleITK tqdm
 
 WORKDIR /opt
-RUN git clone https://github.com/helxplatform/GIL.git
+RUN git clone https://github.com/tmajaria/GIL.git
 
 COPY Dockerfile /opt
