@@ -32,7 +32,7 @@ task test_gpu {
         CODE
     >>>
     runtime {
-        docker: "tmajarian/helxplatform_gil:latest"
+        docker: "quay.io/tmajaria/helxplatform_gil:latest"
         memory: select_first([memory,"16"]) + " GB"
         disks: "local-disk " + select_first([disk,"128"]) + " SSD"
         bootDiskSizeGb: select_first([boot_disk,"50"])
