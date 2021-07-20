@@ -9,6 +9,7 @@ workflow bdc_nifti_imaging {
         Int? memory
         Int? boot_disk
         Int? disk
+        String? gpu_type
     }
     call train {
         input:
@@ -17,6 +18,10 @@ workflow bdc_nifti_imaging {
             test_ratio = test_ratio,
             epochs = epochs,
             batch_size = batch_size,
+            memory = memory,
+            boot_disk = boot_disk,
+            disk = disk,
+            gpu_type = gpu_type
     }
     output {
         File model = train.model
@@ -38,6 +43,8 @@ workflow bdc_nifti_imaging {
         memory: "runtime parameter - amount of memory to allocate in GB. Default is: 16"
         boot_disk: "runtime parameter - amount of boot disk space to allocate in GB. Default is: 50"
         disk: "runtime parameter - amount of disk space to allocate in GB. Default is: 128"
+        gpu_type: {help: "runtime parameter - gpu type. Default is: nvidia-tesla-k80",
+                 suggestions: ["nvidia-tesla-t4", "nvidia-tesla-v100", "nvidia-tesla-p100", "nvidia-tesla-p4", "nvidia-tesla-k80"]}
     }
 }
 
@@ -54,12 +61,13 @@ task train {
         Int? memory
         Int? boot_disk
         Int? disk
+        String? gpu_type
     }
     command {
         set -ux
         # Debug: Output the lists of image_files
-        echo image_files: "${sep='", "' image_files}"
-        echo image_labels: "${sep='", "' image_labels}"
+        # echo image_files: "${sep='", "' image_files}"
+        # echo image_labels: "${sep='", "' image_labels}"
 
         python3 <<CODE
         import re
@@ -73,11 +81,11 @@ task train {
         CODE
 
         # Debug: Output the contents of the CSV file
-        cat ~{csv_filename}
+        # cat ~{csv_filename}
 
         # Debug
-        nvidia-smi
-        /usr/local/cuda/bin/nvcc --version
+        # nvidia-smi
+        # /usr/local/cuda/bin/nvcc --version
 
         python3 /opt/GIL/get_sizes.py --data_csv ~{csv_filename} --image_column ~{filename_column_name} 
 
@@ -89,13 +97,13 @@ task train {
         File image_sizes = "image_sizes.csv"
     }
     runtime {
-        docker: "tmajarian/helxplatform_gil:latest"
+        docker: "quay.io/tmajaria/helxplatform_gil:latest"
         memory: select_first([memory,"16"]) + " GB"
         disks: "local-disk " + select_first([disk,"128"]) + " SSD"
         bootDiskSizeGb: select_first([boot_disk,"50"])
         cpu: 4
         gpuCount: 2
-        gpuType: "nvidia-tesla-k80"
+        gpuType: select_first([gpu_type, "nvidia-tesla-k80"])
         nvidiaDriverVersion: "450.51.06"
         zones: ["us-central1-c"]
     }
